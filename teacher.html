@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizMitra Teacher Dashboard</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial,sans-serif;
+ background:#f1f5f9;
+ color:#172554;
+}
+header{
+ background:#1565c0;
+ color:white;
+ padding:20px;
+ text-align:center;
+}
+.container{
+ max-width:1100px;
+ margin:25px auto;
+ padding:15px;
+}
+.card{
+ background:white;
+ padding:20px;
+ border-radius:12px;
+ margin-bottom:18px;
+ box-shadow:0 3px 12px #0001;
+}
+input,textarea,button{
+ width:100%;
+ padding:12px;
+ margin:7px 0;
+ border:1px solid #ccc;
+ border-radius:7px;
+ font-size:15px;
+}
+button{
+ background:#1565c0;
+ color:white;
+ border:none;
+ cursor:pointer;
+ font-weight:bold;
+}
+button:hover{background:#0d47a1}
+.hidden{display:none}
+.stats{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:12px;
+}
+.stat{
+ background:#e3f2fd;
+ padding:18px;
+ border-radius:10px;
+ text-align:center;
+}
+.stat h2{color:#1565c0}
+table{
+ width:100%;
+ border-collapse:collapse;
+ background:white;
+}
+th,td{
+ padding:12px;
+ border:1px solid #ddd;
+ text-align:left;
+}
+th{background:#1565c0;color:white}
+.table-wrap{overflow-x:auto}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>QuizMitra</h1>
+<p>Teacher Dashboard</p>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+<h2>Teacher Login</h2>
+<input id="email" type="email" placeholder="Teacher Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p id="loginMsg"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<div class="card">
+<h2>Welcome, Teacher!</h2>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="stats">
+<div class="stat">
+<h3>Total Students</h3>
+<h2 id="totalStudents">0</h2>
+</div>
+<div class="stat">
+<h3>Active Quiz</h3>
+<h2 id="totalQuizzes">0</h2>
+</div>
+<div class="stat">
+<h3>Average Marks</h3>
+<h2 id="averageMarks">0</h2>
+</div>
+</div>
+
+<div class="card">
+<h2>Create New Quiz</h2>
+<input id="quizTitle" placeholder="Quiz Name">
+<textarea id="questions" rows="8"
+placeholder='MCQ JSON અહીં મૂકો'></textarea>
+<button onclick="createQuiz()">Create Quiz</button>
+<p id="quizMsg"></p>
+</div>
+
+<div class="card">
+<h2>Quiz Details</h2>
+<div id="quizList">Loading...</div>
+</div>
+
+<div class="card">
+<h2>Live Student Results</h2>
+<input id="search" placeholder="Search Name / Roll Number"
+oninput="showResults()">
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Roll No.</th>
+<th>Quiz ID</th>
+<th>Marks</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody id="resultTable">
+<tr><td colspan="5">No results yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+
+// YOUR FIREBASE CONFIG
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA1v2fI7LmVCBb5kQdONPjlL5bANRESzC8",
+  authDomain: "radhe-454c2.firebaseapp.com",
+  databaseURL: "https://radhe-454c2-default-rtdb.firebaseio.com",
+  projectId: "radhe-454c2",
+  storageBucket: "radhe-454c2.firebasestorage.app",
+  messagingSenderId: "100122845234",
+  appId: "1:100122845234:web:8025d5457f0a2893191c2b",
+  measurementId: "G-NKK1C86SCN"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.database();
+
+let allResults = {};
+
+// LOGIN
+function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ auth.signInWithEmailAndPassword(email,password)
+ .catch(error=>{
+  document.getElementById("loginMsg").innerText=error.message;
+ });
+}
+
+// AUTH CHECK
+auth.onAuthStateChanged(user=>{
+ if(user){
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+  loadQuizzes();
+  loadResults();
+ }else{
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+ }
+});
+
+// LOGOUT
+function logout(){
+ auth.signOut();
+}
+
+// CREATE QUIZ
+function createQuiz(){
+
+ const title=document.getElementById("quizTitle").value.trim();
+ const jsonText=document.getElementById("questions").value.trim();
+
+ if(!title || !jsonText){
+  alert("Quiz Name અને Questions લખો");
+  return;
+ }
+
+ let questions;
+
+ try{
+  questions=JSON.parse(jsonText);
+  if(!Array.isArray(questions) || questions.length===0)
+   throw new Error("Questions array required");
+
+  questions.forEach(q=>{
+   if(!q.question || !Array.isArray(q.options) || !q.answer)
+    throw new Error("દરેક પ્રશ્નમાં question, options અને answer જરૂરી છે");
+  });
+
+ }catch(e){
+  alert("JSON Error: "+e.message);
+  return;
+ }
+
+ const quizId=Math.random().toString(36).substring(2,8).toUpperCase();
+
+ db.ref("quizzes/"+quizId).set({
+  title:title,
+  questions:questions,
+  createdAt:firebase.database.ServerValue.TIMESTAMP,
+  createdBy:auth.currentUser.uid,
+  status:"active"
+ }).then(()=>{
+  document.getElementById("quizMsg").innerText=
+   "Quiz Created! Join Code: "+quizId;
+  document.getElementById("quizTitle").value="";
+  document.getElementById("questions").value="";
+ }).catch(e=>alert(e.message));
+}
+
+// LOAD QUIZZES
+function loadQuizzes(){
+
+ db.ref("quizzes").on("value",snapshot=>{
+
+  const data=snapshot.val()||{};
+  const list=document.getElementById("quizList");
+
+  document.getElementById("totalQuizzes").innerText=
+   Object.keys(data).length;
+
+  list.innerHTML="";
+
+  Object.entries(data).forEach(([id,q])=>{
+   const div=document.createElement("div");
+   div.className="card";
+
+   const heading=document.createElement("h3");
+   heading.textContent=q.title||"Untitled Quiz";
+
+   const code=document.createElement("p");
+   code.textContent="Join Code: "+id;
+
+   const status=document.createElement("p");
+   status.textContent="Status: "+(q.status||"active");
+
+   div.append(heading,code,status);
+   list.appendChild(div);
+  });
+
+  if(!Object.keys(data).length) list.textContent="No quizzes created";
+
+ });
+}
+
+// LOAD LIVE RESULTS
+function loadResults(){
+
+ db.ref("quizResults").on("value",snapshot=>{
+
+  allResults=snapshot.val()||{};
+  showResults();
+
+  const students=Object.values(allResults);
+  document.getElementById("totalStudents").innerText=students.length;
+
+  let total=0;
+  let count=0;
+
+  students.forEach(r=>{
+   total+=Number(r.marks)||0;
+   count++;
+  });
+
+  document.getElementById("averageMarks").innerText=
+   count ? (total/count).toFixed(1) : 0;
+
+ });
+}
+
+// SHOW RESULTS
+function showResults(){
+
+ const search=document.getElementById("search").value.toLowerCase();
+ const table=document.getElementById("resultTable");
+
+ table.innerHTML="";
+
+ Object.entries(allResults).forEach(([id,r])=>{
+
+  if(!r) return;
+
+  const name=String(r.name||"");
+  const roll=String(r.rollNo||"");
+  const quiz=String(r.quizId||"");
+
+  if(!(name+" "+roll+" "+quiz).toLowerCase().includes(search)) return;
+
+  const tr=document.createElement("tr");
+
+  [name,roll,quiz,r.marks??0,r.totalMarks??0].forEach(value=>{
+   const td=document.createElement("td");
+   td.textContent=value;
+   tr.appendChild(td);
+  });
+
+  table.appendChild(tr);
+ });
+
+ if(!table.children.length){
+  table.innerHTML='<tr><td colspan="5">No results found</td></tr>';
+ }
+
+}
+
+</script>
+</body>
+</html>
