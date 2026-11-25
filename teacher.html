@@ -15,10 +15,23 @@ body{
  color:#172554;
 }
 header{
- background:#1565c0;
+ background:linear-gradient(135deg,#1565c0,#0d47a1);
  color:white;
- padding:20px;
+ padding:22px;
  text-align:center;
+}
+.header-logo{
+ width:65px;height:65px;
+ margin:auto auto 10px;
+ background:white;
+ border-radius:50%;
+ overflow:hidden;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+.header-logo img{
+ width:100%;height:100%;object-fit:cover;
 }
 .container{
  max-width:1100px;
@@ -48,6 +61,7 @@ button{
  font-weight:bold;
 }
 button:hover{background:#0d47a1}
+.copy-btn{background:#16803c}
 .hidden{display:none}
 .stats{
  display:grid;
@@ -61,6 +75,7 @@ button:hover{background:#0d47a1}
  text-align:center;
 }
 .stat h2{color:#1565c0}
+.table-wrap{overflow-x:auto}
 table{
  width:100%;
  border-collapse:collapse;
@@ -72,86 +87,127 @@ th,td{
  text-align:left;
 }
 th{background:#1565c0;color:white}
-.table-wrap{overflow-x:auto}
+.code-box{
+ background:#e8f5e9;
+ padding:15px;
+ border-radius:8px;
+ font-size:22px;
+ font-weight:bold;
+ text-align:center;
+ letter-spacing:3px;
+}
+@media(max-width:600px){
+ .stats{grid-template-columns:1fr}
+}
 </style>
 </head>
 
 <body>
 
 <header>
-<h1>QuizMitra</h1>
-<p>Teacher Dashboard</p>
+ <div class="header-logo">
+  <img src="radhe.jpg.jpg" alt="Radhe Logo">
+ </div>
+ <h1>RADHE</h1>
+ <h3>QuizMitra Teacher Dashboard</h3>
 </header>
 
 <div class="container">
 
 <!-- LOGIN -->
 <div class="card" id="loginBox">
-<h2>Teacher Login</h2>
-<input id="email" type="email" placeholder="Teacher Email">
-<input id="password" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<p id="loginMsg"></p>
+ <h2>Teacher Login</h2>
+ <input id="email" type="email" placeholder="Teacher Email">
+ <input id="password" type="password" placeholder="Password">
+ <button onclick="login()">Login</button>
+ <p id="loginMsg"></p>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
 
 <div class="card">
-<h2>Welcome, Teacher!</h2>
-<button onclick="logout()">Logout</button>
+ <h2>Welcome, Teacher!</h2>
+ <button onclick="logout()">Logout</button>
 </div>
 
 <div class="stats">
-<div class="stat">
-<h3>Total Students</h3>
-<h2 id="totalStudents">0</h2>
-</div>
-<div class="stat">
-<h3>Active Quiz</h3>
-<h2 id="totalQuizzes">0</h2>
-</div>
-<div class="stat">
-<h3>Average Marks</h3>
-<h2 id="averageMarks">0</h2>
-</div>
+ <div class="stat">
+  <h3>Total Students</h3>
+  <h2 id="totalStudents">0</h2>
+ </div>
+ <div class="stat">
+  <h3>Total Quizzes</h3>
+  <h2 id="totalQuizzes">0</h2>
+ </div>
+ <div class="stat">
+  <h3>Average Marks</h3>
+  <h2 id="averageMarks">0</h2>
+ </div>
+ <div class="stat">
+  <h3>Total Results</h3>
+  <h2 id="totalResults">0</h2>
+ </div>
 </div>
 
+<!-- CREATE QUIZ -->
 <div class="card">
-<h2>Create New Quiz</h2>
-<input id="quizTitle" placeholder="Quiz Name">
-<textarea id="questions" rows="8"
-placeholder='MCQ JSON અહીં મૂકો'></textarea>
-<button onclick="createQuiz()">Create Quiz</button>
-<p id="quizMsg"></p>
+ <h2>Create New Quiz</h2>
+
+ <input id="quizTitle" placeholder="Quiz Name">
+
+ <label><b>Quiz Timer (Minutes)</b></label>
+ <input id="timerMinutes" type="number" min="1" max="300" value="15">
+
+ <textarea id="questions" rows="8"
+ placeholder='MCQ JSON અહીં મૂકો'></textarea>
+
+ <button onclick="createQuiz()">Create Quiz + Generate Referral Code</button>
+ <p id="quizMsg"></p>
 </div>
 
+<!-- GENERATED REFERRAL -->
+<div class="card hidden" id="referralBox">
+ <h2>🔑 Referral Code</h2>
+ <div class="code-box" id="referralCodeText"></div>
+ <button class="copy-btn" onclick="copyReferralCode()">
+  📋 Copy Referral Code
+ </button>
+ <p id="copyMsg"></p>
+</div>
+
+<!-- QUIZ DETAILS -->
 <div class="card">
-<h2>Quiz Details</h2>
-<div id="quizList">Loading...</div>
+ <h2>Quiz Details</h2>
+ <div id="quizList">Loading...</div>
 </div>
 
+<!-- LIVE RESULTS -->
 <div class="card">
-<h2>Live Student Results</h2>
-<input id="search" placeholder="Search Name / Roll Number"
-oninput="showResults()">
+ <h2>📊 Live Student Results</h2>
+ <input id="search" placeholder="Search Name / Roll Number"
+ oninput="showResults()">
 
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Roll No.</th>
-<th>Quiz ID</th>
-<th>Marks</th>
-<th>Total</th>
-</tr>
-</thead>
-<tbody id="resultTable">
-<tr><td colspan="5">No results yet</td></tr>
-</tbody>
-</table>
-</div>
+ <div class="table-wrap">
+ <table>
+  <thead>
+   <tr>
+    <th>Rank</th>
+    <th>Student Name</th>
+    <th>Roll No.</th>
+    <th>Quiz</th>
+    <th>Correct</th>
+    <th>Wrong</th>
+    <th>Unanswered</th>
+    <th>Points</th>
+    <th>Total Marks</th>
+   </tr>
+  </thead>
+  <tbody id="resultTable">
+   <tr><td colspan="9">No results yet</td></tr>
+  </tbody>
+ </table>
+ </div>
 </div>
 
 </div>
@@ -162,18 +218,16 @@ oninput="showResults()">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-
-// YOUR FIREBASE CONFIG
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "AIzaSyA1v2fI7LmVCBb5kQdONPjlL5bANRESzC8",
-  authDomain: "radhe-454c2.firebaseapp.com",
-  databaseURL: "https://radhe-454c2-default-rtdb.firebaseio.com",
-  projectId: "radhe-454c2",
-  storageBucket: "radhe-454c2.firebasestorage.app",
-  messagingSenderId: "100122845234",
-  appId: "1:100122845234:web:8025d5457f0a2893191c2b",
-  measurementId: "G-NKK1C86SCN"
+ apiKey: "AIzaSyA1v2fI7LmVCBb5kQdONPjlL5bANRESzC8",
+ authDomain: "radhe-454c2.firebaseapp.com",
+ databaseURL: "https://radhe-454c2-default-rtdb.firebaseio.com",
+ projectId: "radhe-454c2",
+ storageBucket: "radhe-454c2.firebasestorage.app",
+ messagingSenderId: "100122845234",
+ appId: "1:100122845234:web:8025d5457f0a2893191c2b",
+ measurementId: "G-NKK1C86SCN"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -182,11 +236,12 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let allResults = {};
+let latestReferralCode = "";
 
 // LOGIN
 function login(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
 
  auth.signInWithEmailAndPassword(email,password)
  .catch(error=>{
@@ -212,22 +267,35 @@ function logout(){
  auth.signOut();
 }
 
-// CREATE QUIZ
-function createQuiz(){
+// RANDOM REFERRAL CODE
+function generateReferralCode(){
+ return "QM" + Math.random().toString(36)
+ .substring(2,8).toUpperCase();
+}
 
- const title=document.getElementById("quizTitle").value.trim();
- const jsonText=document.getElementById("questions").value.trim();
+// CREATE QUIZ
+async function createQuiz(){
+
+ const title = document.getElementById("quizTitle").value.trim();
+ const jsonText = document.getElementById("questions").value.trim();
+ const timer = Number(document.getElementById("timerMinutes").value);
 
  if(!title || !jsonText){
   alert("Quiz Name અને Questions લખો");
   return;
  }
 
+ if(!Number.isInteger(timer) || timer < 1 || timer > 300){
+  alert("Timer 1 થી 300 મિનિટ વચ્ચે રાખો");
+  return;
+ }
+
  let questions;
 
  try{
-  questions=JSON.parse(jsonText);
-  if(!Array.isArray(questions) || questions.length===0)
+  questions = JSON.parse(jsonText);
+
+  if(!Array.isArray(questions) || questions.length === 0)
    throw new Error("Questions array required");
 
   questions.forEach(q=>{
@@ -236,121 +304,251 @@ function createQuiz(){
   });
 
  }catch(e){
-  alert("JSON Error: "+e.message);
+  alert("JSON Error: " + e.message);
   return;
  }
 
- const quizId=Math.random().toString(36).substring(2,8).toUpperCase();
+ const quizId = db.ref("quizzes").push().key;
+ const referralCode = generateReferralCode();
 
- db.ref("quizzes/"+quizId).set({
+ const quizData = {
   title:title,
   questions:questions,
+  timerMinutes:timer,
   createdAt:firebase.database.ServerValue.TIMESTAMP,
   createdBy:auth.currentUser.uid,
-  status:"active"
- }).then(()=>{
-  document.getElementById("quizMsg").innerText=
-   "Quiz Created! Join Code: "+quizId;
+  status:"active",
+  referralCode:referralCode
+ };
+
+ try{
+  const updates = {};
+
+  updates["quizzes/" + quizId] = quizData;
+
+  updates["referralCodes/" + referralCode] = {
+   quizId:quizId,
+   createdBy:auth.currentUser.uid,
+   createdAt:firebase.database.ServerValue.TIMESTAMP,
+   status:"active"
+  };
+
+  await db.ref().update(updates);
+
+  latestReferralCode = referralCode;
+
+  document.getElementById("referralCodeText").innerText=referralCode;
+  document.getElementById("referralBox").classList.remove("hidden");
+
+  document.getElementById("quizMsg").innerText="Quiz Successfully Created!";
   document.getElementById("quizTitle").value="";
   document.getElementById("questions").value="";
- }).catch(e=>alert(e.message));
+
+  loadQuizzes();
+
+ }catch(e){
+  alert("Error: " + e.message);
+ }
 }
 
-// LOAD QUIZZES
+// COPY REFERRAL CODE
+function copyReferralCode(){
+
+ if(!latestReferralCode) return;
+
+ navigator.clipboard.writeText(latestReferralCode)
+ .then(()=>{
+  document.getElementById("copyMsg").innerText="Referral Code Copied!";
+ })
+ .catch(()=>{
+  document.getElementById("copyMsg").innerText=
+  "Copy ન થાય તો Code પસંદ કરીને Copy કરો: " + latestReferralCode;
+ });
+}
+
+// LOAD QUIZZES + DOWNLOAD + SHARE URL
 function loadQuizzes(){
-
+ db.ref("quizzes").off("value");
  db.ref("quizzes").on("value",snapshot=>{
-
   const data=snapshot.val()||{};
   const list=document.getElementById("quizList");
+  const currentUser=auth.currentUser;
+  if(!currentUser) return;
 
-  document.getElementById("totalQuizzes").innerText=
-   Object.keys(data).length;
-
+  const myQuizzes=Object.entries(data).filter(([id,q])=>q && q.createdBy===currentUser.uid);
+  document.getElementById("totalQuizzes").innerText=myQuizzes.length;
   list.innerHTML="";
 
-  Object.entries(data).forEach(([id,q])=>{
+  myQuizzes.forEach(([id,q])=>{
    const div=document.createElement("div");
    div.className="card";
 
    const heading=document.createElement("h3");
-   heading.textContent=q.title||"Untitled Quiz";
-
-   const code=document.createElement("p");
-   code.textContent="Join Code: "+id;
-
+   heading.textContent=q.title || "Untitled Quiz";
+   const timer=document.createElement("p");
+   timer.textContent="Timer: "+(q.timerMinutes || 15)+" Minutes";
+   const referral=document.createElement("p");
+   referral.textContent="Referral Code: "+(q.referralCode || "Not available");
    const status=document.createElement("p");
-   status.textContent="Status: "+(q.status||"active");
+   status.textContent="Status: "+(q.status || "active");
 
-   div.append(heading,code,status);
+   const copy=document.createElement("button");
+   copy.className="copy-btn";
+   copy.textContent="📋 Copy Referral Code";
+   copy.onclick=()=>copyText(q.referralCode || "", "Referral Code Copied!");
+
+   const download=document.createElement("button");
+   download.textContent="⬇️ Download Quiz JSON";
+   download.onclick=()=>downloadQuizJSON(id,q);
+
+   const share=document.createElement("button");
+   share.textContent="🔗 Share Quiz URL";
+   share.onclick=()=>shareQuizURL(q);
+
+   div.append(heading,timer,referral,status,copy,download,share);
    list.appendChild(div);
   });
 
-  if(!Object.keys(data).length) list.textContent="No quizzes created";
-
+  if(!list.children.length) list.textContent="No quizzes created";
  });
 }
 
-// LOAD LIVE RESULTS
+// COPY TEXT HELPER
+function copyText(text,message){
+ if(!text){ alert("કોઈ Code ઉપલબ્ધ નથી"); return; }
+ if(navigator.clipboard && window.isSecureContext){
+  navigator.clipboard.writeText(text).then(()=>alert(message)).catch(()=>prompt("Copy કરો:",text));
+ }else{
+  prompt("Copy કરો:",text);
+ }
+}
+
+// DOWNLOAD QUIZ AS JSON FILE
+function downloadQuizJSON(id,quiz){
+ const exportData={
+  quizId:id,
+  title:quiz.title || "Quiz",
+  timerMinutes:quiz.timerMinutes || 15,
+  referralCode:quiz.referralCode || "",
+  questions:quiz.questions || []
+ };
+ const blob=new Blob([JSON.stringify(exportData,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download=(String(quiz.title || "quiz").replace(/[^a-z0-9-_]/gi,"_") || "quiz")+".json";
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ URL.revokeObjectURL(url);
+}
+
+// SHARE STUDENT QUIZ URL
+function shareQuizURL(quiz){
+ if(!quiz.referralCode){ alert("આ Quiz નો Referral Code ઉપલબ્ધ નથી"); return; }
+ const url=new URL("index.html",window.location.href);
+ url.searchParams.set("code",quiz.referralCode);
+ const shareUrl=url.href;
+ const shareData={title:quiz.title || "QuizMitra Quiz",text:"આ Quiz માં જોડાવા માટે Link ખોલો:",url:shareUrl};
+ if(navigator.share){
+  navigator.share(shareData).catch(()=>copyText(shareUrl,"Quiz Link Copied!"));
+ }else{
+  copyText(shareUrl,"Quiz Link Copied!");
+ }
+}
+
+// LOAD LIVE RESULTS + TOTAL STUDENTS + TOTAL RESULTS
 function loadResults(){
-
- db.ref("quizResults").on("value",snapshot=>{
-
-  allResults=snapshot.val()||{};
+ db.ref("quizResults").on("value", snapshot=>{
+  allResults = snapshot.val() || {};
   showResults();
-
-  const students=Object.values(allResults);
-  document.getElementById("totalStudents").innerText=students.length;
-
-  let total=0;
-  let count=0;
-
-  students.forEach(r=>{
-   total+=Number(r.marks)||0;
-   count++;
-  });
-
-  document.getElementById("averageMarks").innerText=
-   count ? (total/count).toFixed(1) : 0;
-
  });
 }
 
-// SHOW RESULTS
 function showResults(){
+ const currentUser = auth.currentUser;
+ if(!currentUser) return;
 
- const search=document.getElementById("search").value.toLowerCase();
- const table=document.getElementById("resultTable");
+ const search = (document.getElementById("search").value || "").trim().toLowerCase();
+ const table = document.getElementById("resultTable");
+ table.innerHTML = "";
 
- table.innerHTML="";
+ // Only show this teacher's submitted results
+ const results = Object.entries(allResults || {})
+  .filter(([id,r]) => r && r.teacherUid === currentUser.uid);
 
- Object.entries(allResults).forEach(([id,r])=>{
+ document.getElementById("totalResults").innerText = results.length;
 
-  if(!r) return;
+ // Unique students based on roll number + name
+ const students = new Set(results.map(([id,r]) =>
+  String(r.rollNo || "").trim().toLowerCase() + "|" +
+  String(r.name || "").trim().toLowerCase()
+ ));
+ document.getElementById("totalStudents").innerText = students.size;
 
-  const name=String(r.name||"");
-  const roll=String(r.rollNo||"");
-  const quiz=String(r.quizId||"");
+ // Average marks percentage
+ let obtained = 0, possible = 0;
+ results.forEach(([id,r])=>{
+  obtained += Number(r.marks) || 0;
+  possible += Number(r.totalMarks) || 0;
+ });
+ document.getElementById("averageMarks").innerText =
+  possible ? (obtained / possible * 100).toFixed(1) + "%" : "0%";
 
-  if(!(name+" "+roll+" "+quiz).toLowerCase().includes(search)) return;
+ // Sort and rank within each quiz
+ results.sort((a,b)=>{
+  if(String(a[1].quizId) !== String(b[1].quizId)){
+   return String(a[1].quizId).localeCompare(String(b[1].quizId));
+  }
+  const diff = (Number(b[1].marks) || 0) - (Number(a[1].marks) || 0);
+  if(diff) return diff;
+  return Number(a[1].submittedAt || 0) - Number(b[1].submittedAt || 0);
+ });
 
-  const tr=document.createElement("tr");
+ const counters = {};
+ const ranks = {};
+ results.forEach(([id,r])=>{
+  const qid = String(r.quizId || "");
+  counters[qid] = (counters[qid] || 0) + 1;
+  ranks[id] = counters[qid];
+ });
 
-  [name,roll,quiz,r.marks??0,r.totalMarks??0].forEach(value=>{
-   const td=document.createElement("td");
-   td.textContent=value;
+ results.forEach(([id,r])=>{
+  const name = String(r.name || "");
+  const roll = String(r.rollNo || "");
+  const quiz = String(r.quizTitle || r.quizId || "");
+
+  if(!(name + " " + roll + " " + quiz).toLowerCase().includes(search)) return;
+
+  const rank = ranks[id];
+  const rankLabel = rank === 1 ? "🥇 1" :
+                    rank === 2 ? "🥈 2" :
+                    rank === 3 ? "🥉 3" : String(rank);
+
+  const values = [
+   rankLabel, name, roll, quiz,
+   Number(r.correctAnswers) || 0,
+   Number(r.wrongAnswers) || 0,
+   Number(r.unanswered) || 0,
+   Number(r.marks) || 0,
+   Number(r.totalMarks) || 0
+  ];
+
+  const tr = document.createElement("tr");
+  values.forEach(value=>{
+   const td = document.createElement("td");
+   td.textContent = value;
    tr.appendChild(td);
   });
-
   table.appendChild(tr);
  });
 
  if(!table.children.length){
-  table.innerHTML='<tr><td colspan="5">No results found</td></tr>';
+  table.innerHTML = '<tr><td colspan="9">No results found</td></tr>';
  }
-
 }
 
+// Firebase listener updates the dashboard live
 </script>
 </body>
 </html>
